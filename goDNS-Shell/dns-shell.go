@@ -35,8 +35,9 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	cm = comandManager{
-		CommandMap: make(map[string]Command),
-		CMMutex:    &sync.RWMutex{},
+		CommandMap:     make(map[string]Command),
+		CMMutex:        &sync.RWMutex{},
+		WaitingCommand: "NoCMD",
 	}
 
 	fmt.Println("cats")
