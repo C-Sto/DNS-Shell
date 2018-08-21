@@ -59,7 +59,7 @@ func monitorResponse(wg *sync.WaitGroup, uuidChan chan string) {
 		if c.Response.IsDone() {
 			fmt.Println(c.Response.ReadResposne())
 			break
-		} else {
+		} else if c.Response.TotalChunks != 0 {
 			fmt.Printf("Received %d of %d...\n", c.Response.ReadChunks, c.Response.TotalChunks)
 		}
 		time.Sleep(time.Second * 1)

