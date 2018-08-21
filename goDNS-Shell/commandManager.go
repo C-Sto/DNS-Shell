@@ -36,7 +36,7 @@ func (cm *comandManager) UpdateCmd(uuid, maxchunks, thischunk, vals string) {
 		fmt.Println("Bad chunk number: ", e)
 		return
 	}
-	mc, e := strconv.ParseInt(thischunk, 10, 64)
+	mc, e := strconv.ParseInt(maxchunks, 10, 64)
 	if e != nil {
 		fmt.Println("Bad max chunk number: ", e)
 		return
